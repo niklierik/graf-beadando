@@ -1,4 +1,4 @@
-# Gráfelméleti összefoglaló
+# Gráfelméleti algoritmusok
 
 ## Alapfogalmak és definíciók
 
