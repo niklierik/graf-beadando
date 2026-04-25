@@ -2002,3 +2002,170 @@ console.log("--------------------------------");
 VÉGEREDMÉNY: 120 Ω
 --------------------------------
 ```
+
+## Tiltott részgráfokkal jellemzett osztályok
+
+A gráfelmélet egyik legfontosabb megközelítése a gráfosztályok definíciója nem tulajdonságok (pl. "összefüggő"), hanem **tiltott struktúrák** alapján. Egy gráfosztályt akkor jellemzünk tiltott részgráfokkal, ha megadjuk azoknak a gráfoknak a halmazát ($\mathcal{F}$), amelyeket a vizsgált gráf nem tartalmazhat "formációként".
+
+### Tartalmazási relációk (Mikor "tiltott"?)
+A "tartalmazás" többféleképpen értelmezhető, ami eltérő osztályokhoz vezet:
+
+* **Részgráf (Subgraphs):** $H$ nem lehet része $G$-nek (élek elhagyásával sem).
+* **Feszített részgráf (Induced Subgraphs):** $H$ nem jelenhet meg úgy, hogy $G$ bizonyos pontjait és az összes közöttük futó élet megtartjuk. (Pl. a húrmentes körök vizsgálata).
+* **Minor (Minors):** $H$ nem kapható meg $G$-ből éllehagyással, ponttörléssel vagy élösszehúzással. (A legmélyebb elméleti háttér).
+
+
+### Nevezetes tételek és osztályok
+
+| Gráfosztály | Tiltott struktúra | Megjegyzés |
+| :--- | :--- | :--- |
+| **Erdő (Forest)** | Körök ($C_n$) | Nem tartalmazhat semmilyen kört részgráfként. |
+| **Páros gráfok** | Páratlan körök ($C_{2k+1}$) | Csak páros hosszúságú körök megengedettek. |
+| **Síkgráfok** | $K_5$ és $K_{3,3}$ minorok | Kuratowski-tétel: ezen gráfok felosztásait nem tartalmazhatja. |
+| **Perfekt gráfok** | Páratlan lyukak és anti-lyukak | Erős perfekt gráf tétel (Berge-sejtés). |
+| **Kordális gráfok** | $C_n$ ahol $n \ge 4$ | Feszített részgráfként nem tartalmazhat $3$-nál hosszabb kört. |
+
+
+### Jellemző tulajdonságok
+* **Öröklődő tulajdonság:** Ha egy osztály tiltott részgráfokkal van definiálva, akkor a tulajdonság öröklődik a részgráfokra (ha $G$ benne van, minden részgráfja is).
+* **Véges vs. Végtelen bázis:** Bizonyos osztályok jellemezhetőek véges sok tiltott gráffal (pl. síkgráfok), másoknak végtelen sok tiltott eleme van (pl. páros gráfok, mert minden páratlan kör tiltott).
+
+
+
+
+### A Robertson–Seymour tétel (Minor-tétel)
+A gráfelmélet egyik legmélyebb eredménye. Kimondja, hogy minden olyan gráfosztály, amely zárt a minor képzésre (tehát ha $G$ benne van, minden minora is), jellemezhető **véges sok** tiltott minorral.
+
+> **Példa:** A síkba rajzolhatóság minor-zárt tulajdonság, és a tiltott minorok halmaza véges: $\{K_5, K_{3,3}\}$.
+
+
+### Regiszterallokáció (Kordális gráfok)
+
+#### Szituáció
+A fordítóprogramoknak változókat kell regiszterekhez rendelniük. Két változó között akkor van él (**interferencia**), ha egy időben aktívak. A cél a gráf színezése a lehető legkevesebb színnel (regiszterrel).
+
+```mermaid
+graph TD
+    V1((V1)) --- V2((V2))
+    V2 --- V3((V3))
+    V3 --- V4((V4))
+    V4 --- V1
+```
+
+#### A tiltott részgráf szerepe
+A strukturált programkódok interferencia-gráfjai általában **kordális gráfok**. 
+* **Definíció:** Nem tartalmaznak **húrmentes kört** ($C_n, n \geq 4$) feszített részgráfként.
+* **Tiltott struktúra:** $C_4, C_5, C_6 \dots$ (hosszú "lyukak").
+
+## A megoldás menete és magyarázata
+
+A feladat megoldása során nem egyszerűen csak színeket osztunk ki, hanem a gráf **topológiáját** változtatjuk meg, hogy egy matematikailag könnyebben kezelhető osztályba (a kordális gráfok közé) kerüljünk.
+
+### 1. A tiltott részgráf azonosítása
+A fordítóprogram első lépése a gráf feltérképezése. Amikor a változók ütközési gráfjában talál egy $C_4, C_5$ vagy hosszabb húrmentes kört (pl. $V_1-V_2-V_3-V_4-V_1$), felismeri, hogy egy **tiltott struktúrával** áll szemben. 
+* **A baj:** Ebben a körben bármely két nem szomszédos változó "távol" van egymástól, nincs köztük kényszer, de a kör egésze miatt az optimális színezés kiszámítása általános esetben exponenciális időt is igénybe vehetne.
+
+### 2. Trianguláció (A "húr" behúzása)
+A megoldás kulcsa a **trianguláció**. A program mesterségesen létrehoz egy új élt (húrt), például $V_1$ és $V_3$ között. 
+* **Hogyan történik ez a gyakorlatban?** A fordítóprogram úgy dönt, hogy a $V_1$ és $V_3$ változókat "összeköti" egy közös műveletben, vagy kényszeríti őket, hogy ne kerülhessenek azonos regiszterbe akkor sem, ha eredetileg nem ütköztek volna. 
+* **Eredmény:** A $C_4$ négyszög két $K_3$ háromszöggé válik. Ezzel a gráf **kordális** lesz.
+
+
+
+### 3. Optimális sorrend (PEO) meghatározása
+A kordális gráfok nagy előnye, hogy létezik hozzájuk egy **Perfect Elimination Ordering (Tökéletes Kiejtési Sorrend)**. Ez egy olyan pontsorrend, amelyben a pontokat egymás után vizsgálva a szomszédaik mindig egy "klikk"-et (teljes részgráfot) alkotnak.
+* A JS kódban ez volt a `['V4', 'V2', 'V3', 'V1']` sorrend.
+
+### 4. Mohó színezés és eredmény
+Miután a tiltott részgráfot megszüntettük és megvan a PEO sorrend, a **mohó algoritmus** (Greedy Coloring) lép életbe:
+1. Fogja a soron következő változót.
+2. Megnézi, milyen színeket (regisztereket) használnak már a szomszédai.
+3. Kiosztja a legkisebb szabad sorszámú regisztert.
+
+**A matematikai garancia:** Mivel a gráf kordális és PEO sorrendet használtunk, a mohó algoritmus **garantáltan a kromatikus számot ($\chi(G)$)** fogja eredményezni, vagyis a lehető legkevesebb regisztert használja el.
+
+```mermaid
+graph TD
+    V1_k((V1)) --- V2_k((V2))
+    V2_k --- V3_k((V3))
+    V3_k --- V4_k((V4))
+    V4_k --- V1_k
+    
+    %% A HÚR (chord) behúzása
+    V1_k -.-|Húr| V3_k
+```
+
+```js
+/**
+ * Regiszterallokáció szimuláció (Kordális vs. Nem kordális)
+ */
+class RegisterAllocator {
+    constructor(adjacencies) {
+        this.graph = adjacencies;
+        this.nodes = Object.keys(adjacencies);
+    }
+
+    // Egyszerű mohó színezés
+    colorGraph(order = this.nodes) {
+        const result = {};
+        
+        order.forEach(node => {
+            const neighborColors = new Set(
+                this.graph[node]
+                    .map(neighbor => result[neighbor])
+                    .filter(color => color !== undefined)
+            );
+
+            // Megkeressük a legkisebb elérhető színt (regisztert)
+            let color = 0;
+            while (neighborColors.has(color)) {
+                color++;
+            }
+            result[node] = color;
+        });
+
+        return result;
+    }
+}
+
+// --- 1. ESET: Tiltott részgráfot tartalmazó gráf (C4 kör: V1-V2-V3-V4-V1) ---
+const forbiddenGraph = {
+    'V1': ['V2', 'V4'],
+    'V2': ['V1', 'V3'],
+    'V3': ['V2', 'V4'],
+    'V4': ['V3', 'V1']
+};
+
+// --- 2. ESET: Kordális gráf (Ugyanez, de behúztunk egy V1-V3 húrt) ---
+const chordalGraph = {
+    'V1': ['V2', 'V4', 'V3'], // +V3 húr
+    'V2': ['V1', 'V3'],
+    'V3': ['V2', 'V4', 'V1'], // +V1 húr
+    'V4': ['V3', 'V1']
+};
+
+const allocatorForbidden = new RegisterAllocator(forbiddenGraph);
+const allocatorChordal = new RegisterAllocator(chordalGraph);
+
+// Színezés (Regiszterkiosztás)
+const res1 = allocatorForbidden.colorGraph();
+const res2 = allocatorChordal.colorGraph(['V4', 'V2', 'V3', 'V1']); // PEO sorrend
+
+console.log("=== 1. Tiltott C4 kör (Nem kordális) ===");
+console.log("Regiszter kiosztás:", res1);
+console.log("Szükséges regiszterek száma:", Math.max(...Object.values(res1)) + 1);
+
+console.log("\n=== 2. Triangulált (Kordális) gráf ===");
+console.log("Regiszter kiosztás:", res2);
+console.log("Szükséges regiszterek száma:", Math.max(...Object.values(res2)) + 1);
+```
+
+```log
+=== 1. Tiltott C4 kör (Nem kordális) ===
+Regiszter kiosztás: { V1: 0, V2: 1, V3: 0, V4: 1 }
+Szükséges regiszterek száma: 2
+
+=== 2. Triangulált (Kordális) gráf ===
+Regiszter kiosztás: { V4: 0, V2: 0, V3: 1, V1: 2 }
+Szükséges regiszterek száma: 3
+```
