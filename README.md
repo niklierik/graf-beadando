@@ -632,6 +632,133 @@ $$u v \in E \iff I_u \cap I_v \neq \emptyset$$
 - **Modell:** Az intervallumok egy rendszert alkotnak. Keressük a minimális méretű $K \subset \mathbb{R}$ halmazt, amely minden intervallumot metsz.
 - **Megoldás:** Mohó algoritmus. Mindig a legkorábban véget érő intervallum ($T_{min}$) végpontjába teszünk egy pontot, majd töröljük az általa lefedett intervallumokat.
 
+#### Gyakorlati feladat: Az Influencer Kampány Optimalizálása
+
+#### A szituáció
+Egy marketingügynökség egy új terméket akar népszerűsíteni. 6 különböző influencer vállalta, hogy készít egy-egy "élő bejelentkezést" (live stream) a saját csatornáján a hétvége folyamán. A cégnek delegálnia kell egy moderátort, aki jelen van a streamek alatt, hogy válaszoljon a kérdésekre. A moderátor óradíja magas, ezért a cél az, hogy **a lehető legkevesebb időpontban** csatlakozzon be a moderátor úgy, hogy minden influencer adásába legalább egyszer "belépjen".
+
+#### Az adatok (időintervallumok szombat 10:00-tól számítva, órában)
+* **Influencer 1:** [0, 3] (10:00 – 13:00)
+* **Influencer 2:** [1, 4] (11:00 – 14:00)
+* **Influencer 3:** [2, 5] (12:00 – 15:00)
+* **Influencer 4:** [6, 8] (16:00 – 18:00)
+* **Influencer 5:** [7, 10] (17:00 – 20:00)
+* **Influencer 6:** [4, 7] (14:00 – 17:00)
+
+#### A feladat
+Határozd meg a moderátor belépési időpontjainak minimális számát és a konkrét időpontokat!
+
+#### Gráf
+
+Ez a gráf reprezentálja az influenszerek adásait. Csúcsok a különböző adások, élek olyan csúcspárok közt találhatóak, amely adások közt van átfedés.
+
+```mermaid
+graph TD
+    %% Csúcsok definiálása (Intervallumok)
+    I1["Influencer 1 [0, 3]"]
+    I2["Influencer 2 [1, 4]"]
+    I3["Influencer 3 [2, 5]"]
+    I4["Influencer 4 [6, 8]"]
+    I5["Influencer 5 [7, 10]"]
+    I6["Influencer 6 [4, 7]"]
+
+    %% Élek: ahol van időbeli átfedés
+    I1 --- I2
+    I1 --- I3
+    I2 --- I3
+    I2 --- I6
+    I3 --- I6
+    I6 --- I4
+    I6 --- I5
+    I4 --- I5
+```
+
+
+#### Megoldás (A jegyzetben szereplő mohó algoritmussal)
+
+**1. Lépés: Rendezés a jobb végpontok szerint**
+Rendezzük az élő adásokat aszerint, hogy melyik fejeződik be legkorábban:
+1.  Influencer 1: [0, **3**]
+2.  Influencer 2: [1, **4**]
+3.  Influencer 3: [2, **5**]
+4.  Influencer 6: [4, **7**]
+5.  Influencer 4: [6, **8**]
+6.  Influencer 5: [7, **10**]
+
+**2. Lépés: Az első ellenőrző pont kiválasztása**
+Vegyük a legelső befejezési időpontot: **$T_1 = 3$**.
+A moderátor belép a 3. órában (13:00-kor).
+* **Kit fed le?** Aki ekkor épp online van: **Influencer 1, 2 és 3**. Ezeket a sorból kihúzzuk.
+
+**3. Lépés: A következő pont kiválasztása a maradékból**
+A megmaradt adások (6, 4, 5) közül a legkorábbi befejezés az Influencer 6-é: **$T_6 = 7$**.
+A moderátor belép a 7. órában (17:00-kor).
+* **Kit fed le?** Aki ekkor épp online van: **Influencer 6, 4 és 5**. (Mivel a 4-es és 5-ös adása is átfedi a 7. órát).
+
+#### Konklúzió
+A minimális lefedő halmaz mérete **$k = 2$**.
+Az optimális megoldás: A moderátornak elég **13:00-kor** és **17:00-kor** bejelentkeznie. Ezzel a két rövid időponttal az összes (mind a 6) influencer kampányában részt vett.
+
+> **Miért optimális?** Mert az Influencer 1 [0,3] és az Influencer 6 [4,7] intervallumok teljesen diszjunktak (nincs átfedésük). Ezért matematikailag lehetetlen 2-nél kevesebb ponttal lefedni a rendszert, hiszen ehhez a két adáshoz mindenképp két külön időpont kell.
+
+#### JS kód
+
+```js
+/**
+ * Intervallum lefedő probléma megoldása (Mohó algoritmus)
+ * @param {Array} intervals - Az intervallumok listája [kezdet, vég] formátumban
+ * @returns {Array} - A kiválasztott optimális időpontok (pontok) listája
+ */
+function solveIntervalCovering(intervals) {
+    if (intervals.length === 0) return [];
+
+    // 1. Lépés: Rendezés a jobb végpontok (Ti) szerint növekvő sorrendbe
+    // Fontos: a mohó választás alapja a legkorábbi befejezés!
+    const sortedIntervals = [...intervals].sort((a, b) => a[1] - b[1]);
+
+    const coveringPoints = [];
+    
+    // Az első pontot a legelsőként végződő intervallum végpontjába tesszük
+    let lastPoint = sortedIntervals[0][1];
+    coveringPoints.push(lastPoint);
+
+    // 2. Lépés: Iterálás a többi intervallumon
+    for (let i = 1; i < sortedIntervals.length; i++) {
+        const [start, end] = sortedIntervals[i];
+
+        // Ha a jelenlegi intervallum már tartalmazza az utolsó lehelyezett pontot,
+        // akkor ez az intervallum már le van fedve, ugorhatunk.
+        if (start <= lastPoint && lastPoint <= end) {
+            continue;
+        }
+
+        // Ha nincs lefedve, lehelyezünk egy új pontot a jelenlegi intervallum végpontjába
+        lastPoint = end;
+        coveringPoints.push(lastPoint);
+    }
+
+    return coveringPoints;
+}
+
+// --- Tesztelés az Influencer példával ---
+const influencerSlots = [
+    [0, 3], // Influencer 1
+    [1, 4], // Influencer 2
+    [2, 5], // Influencer 3
+    [6, 8], // Influencer 4
+    [7, 10], // Influencer 5
+    [4, 7]  // Influencer 6
+];
+
+const result = solveIntervalCovering(influencerSlots);
+
+console.log("Optimális időpontok a moderátor belépéséhez:", result);
+```
+
+```log
+Optimális időpontok a moderátor belépéséhez: [ 3, 7 ]
+```
+
 ### Színezés
 
 **Szituáció:** Egy konferencián több előadást kell megtartani, amelyek kezdési és befejezési időpontjai adottak ($I_i$). Hány tárgyalóra van szükségünk minimum, ha az egymással időben átfedő előadások nem lehetnek ugyanabban a teremben?
