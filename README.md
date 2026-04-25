@@ -609,3 +609,39 @@ graph TD
     u4 -. 0 .-> u5
     u5 -. 0 .-> u6
 ```
+
+## Intervallum gráfok
+
+Az intervallum gráfok a geometriai gráfok egy speciális osztályát alkotják, amelyek jól modellezik az időbeli átfedéseket vagy erőforrás-ütközéseket.
+
+### Definíció
+
+Egy $G = (V, E)$ gráf **intervallum gráf**, ha csúcsaihoz hozzárendelhető a valós számegyenes egy-egy $I_i = [t_i, T_i]$ intervalluma úgy, hogy két csúcs között pontosan akkor van él, ha a hozzájuk tartozó intervallumok metszete nem üres:
+$$u v \in E \iff I_u \cap I_v \neq \emptyset$$
+
+### Főbb tulajdonságok
+
+- **Perfekt gráfok:** Az intervallum gráfokra igaz, hogy a klikkszámuk ($\omega(G)$) megegyezik a kromatikus számukkal ($\chi(G)$).
+- **Húrgráfok:** Nem tartalmaznak 3-nál hosszabb indukált kört (azaz minden 4 vagy több hosszú körnek van "húrja").
+- **Mohó algoritmus:** Sok NP-nehéz probléma (színezés, maximális független csúcshalmaz) intervallum gráfokon lineáris időben, mohó módon megoldható.
+
+### Lefedő halmaz
+
+**Szituáció:** Adott több kifizetendő számla, mindegyikhez tartozik egy határidő-intervallum $[t_i, T_i]$, amikor rendezhető. Keressük a legkevesebb időpontot, amikor a postára menve az összes esedékes számlát be tudjuk fizetni.
+
+- **Modell:** Az intervallumok egy rendszert alkotnak. Keressük a minimális méretű $K \subset \mathbb{R}$ halmazt, amely minden intervallumot metsz.
+- **Megoldás:** Mohó algoritmus. Mindig a legkorábban véget érő intervallum ($T_{min}$) végpontjába teszünk egy pontot, majd töröljük az általa lefedett intervallumokat.
+
+### Színezés
+
+**Szituáció:** Egy konferencián több előadást kell megtartani, amelyek kezdési és befejezési időpontjai adottak ($I_i$). Hány tárgyalóra van szükségünk minimum, ha az egymással időben átfedő előadások nem lehetnek ugyanabban a teremben?
+
+- **Modell:** A feladat a gráf **minimális színezése**. A színek reprezentálják a termeket. Ha két intervallum metszi egymást, a gráfban él van köztük, tehát különböző színt (termet) kell kapniuk.
+- **Megoldás:** Az intervallumokat jobb végpontjuk szerint csökkenő sorrendbe rendezzük, és a legkisebb szabad "színt" (terem számot) osztjuk ki nekik.
+
+### Maximális független halmaz
+
+**Szituáció:** Egy szerverhez különböző kérések érkeznek, amik adott időtartamig foglalnák le a teljes kapacitást. Mivel egyszerre csak egy kérést tud kiszolgálni, mi a legtöbb kérés, amit teljesíteni tud?
+
+- **Modell:** Keressük a gráf **maximális független csúcshalmazát** (olyan intervallumokat, amelyek közül semelyik kettő nem metszi egymást).
+- **Megoldás:** Hasonló a lefedő problémához: mindig a legkorábban véget érő, még lehetséges intervallumot választjuk ki.
