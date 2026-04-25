@@ -151,27 +151,27 @@ A feladat, hogy meghatározzuk a város mely pontjaiba jut el a V1 és a V2 víz
 
 ```mermaid
 graph TD
-    V1((V1: Víztározó 1))  F1[F1: Főelosztó]
-    F1  K1[K1: Központi csomópont]
-    K1  H[H: Kórház]
-    F1  H
+    V1((V1: Víztározó 1)) --- F1[F1: Főelosztó]
+    F1 --- K1[K1: Központi csomópont]
+    K1 --- H[H: Kórház]
+    F1 --- H
 
-    V2((V2: Víztározó 2))  B1[B1: Betápláló pont]
-    V2  T1[T1: Víztorony]
+    V2((V2: Víztározó 2)) --- B1[B1: Betápláló pont]
+    V2 --- T1[T1: Víztorony]
 
-    B1  SZ1[SZ1: Szivattyúállomás]
-    B1  T1
+    B1 --- SZ1[SZ1: Szivattyúállomás]
+    B1 --- T1
 
-    SZ1  I1[I1: Ipari Park]
-    T1  I1
+    SZ1 --- I1[I1: Ipari Park]
+    T1 --- I1
 
-    T1  I2[I2: Raktárbázis]
+    T1 --- I2[I2: Raktárbázis]
 
-    I1  I2
-    SZ1  I2
+    I1 --- I2
+    SZ1 --- I2
 
-    I2  L1[L1: Lakópark]
-    L1  L2[L2: Társasházak]
+    I2 --- L1[L1: Lakópark]
+    L1 --- L2[L2: Társasházak]
 
     %% Szigetelt pont
     U[U: Üzemanyagtöltő]
