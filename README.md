@@ -2169,3 +2169,12 @@ Szükséges regiszterek száma: 2
 Regiszter kiosztás: { V4: 0, V2: 0, V3: 1, V1: 2 }
 Szükséges regiszterek száma: 3
 ```
+
+
+## Források
+
+- Jegyzet: https://www.inf.u-szeged.hu/~pluhar/oktatas/grafalg.pdf
+- AI beszélgetések:
+  - https://gemini.google.com/share/75742f671e1f
+  - https://gemini.google.com/share/990b6ec9e47c
+  - https://gemini.google.com/share/cb695c86b260
