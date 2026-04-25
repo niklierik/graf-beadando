@@ -1398,3 +1398,226 @@ console.log("Kiosztás eszközönként:", result.assignments);
 Minimálisan szükséges csatornák száma: 4
 Kiosztás eszközönként: { S1: 1, S2: 2, S3: 3, S4: 4, S5: 1, S6: 2 }
 ```
+
+## Stabil párosítások és a Gale-Shapley algoritmus
+
+A stabil párosítás problémája a páros gráfok egy speciális optimalizálási kérdése, ahol nem csupán a párok létezése, hanem a résztvevők egyéni preferenciái is döntőek.
+
+### Alapfogalmak
+* **Preferencialista:** Adott két azonos létszámú halmaz (hagyományosan $n$ férfi és $n$ nő). Minden résztvevő rangsorolja a másik halmaz összes tagját a saját szubjektív tetszése szerint.
+* **Instabil párosítás:** Egy párosítás instabil, ha létezik egy olyan férfi ($\alpha$) és egy olyan nő ($A$), akik jelenleg nem alkotnak egy párt, de $\alpha$ jobban kedveli $A$-t a jelenlegi párjánál, és $A$ is jobban kedveli $\alpha$-t a jelenlegi párjánál. Ekkor $\alpha$ és $A$ egy **blokkoló párt** alkotnak.
+* **Stabil párosítás:** Olyan párosítás, amelyben nem található blokkoló pár. Egy stabil rendszerben senkinek nem áll érdekében a jelenlegi kapcsolatát felbontani egy másik féllel való közös megegyezés alapján.
+
+### A Gale-Shapley algoritmus
+D. Gale és L. S. Shapley 1962-ben bizonyították, hogy bármilyen preferencialisták esetén létezik legalább egy stabil párosítás. Az általuk javasolt mohó típusú algoritmus lépései:
+
+1.  **Ajánlattétel:** Minden férfi megkéri a preferencialistáján szereplő első (legjobb) nő kezét.
+2.  **Mérlegelés:** Minden nő a hozzá érkező ajánlatok közül kiválasztja a számára legkedvesebbet, és őt „várakozó listára” teszi (ideiglenes elköteleződés), a többi kérőt pedig elutasítja.
+3.  **Ismétlés:** Az elutasított férfiak a listájukon következő (még meg nem kérdezett) nőnél próbálkoznak.
+4.  **Frissítés:** Ha egy nő kap egy olyan új ajánlatot, amely számára kedvezőbb, mint a várakozó listáján lévő férfi, akkor az újat fogadja el, a korábbit pedig elutasítja.
+5.  **Befejezés:** Az eljárás addig folytatódik, amíg mindenki párra nem lel. Az algoritmus legfeljebb $n^2 - 2n + 2$ lépésben véget ér.
+
+### Fontos tulajdonságok
+* **Mindig létezik megoldás:** Az algoritmus minden esetben stabil párosítással zárul.
+* **Férfi-optimális:** Az alap algoritmus (ahol a férfiak kezdeményeznek) a férfiak számára elérhető legjobb, a nők számára viszont az elérhető legrosszabb stabil párosítást eredményezi. Fordított esetben (női kezdeményezés) az eredmény nő-optimális lesz.
+* **Szobatárs-probléma:** Fontos megjegyezni, hogy ha a párosítás nem két különálló halmaz között történik (pl. $2n$ embert kell kétágyas szobákba osztani), akkor nem garantált a stabil megoldás létezése.
+
+Íme egy összetettebb, 10 diákot és 3 egyetemi szakot tartalmazó modell. Ez már hűen tükrözi, hogyan dőlnek el a ponthatárok egy valódi felvételi során.
+
+### Egyetemi felvételi szimuláció
+
+#### Adatok
+
+**1. Egyetemi szakok és kapacitások:**
+* **INFO (Informatika):** 3 férőhely
+* **GAZD (Gazdálkodás):** 3 férőhely
+* **MŰV (Művészet):** 2 férőhely
+
+**2. Diákok pontszámai és preferenciái:**
+
+| Diák | Pontszám | 1. opció | 2. opció | 3. opció |
+| :--- | :--- | :--- | :--- | :--- |
+| **Adél** | 490 | INFO | GAZD | - |
+| **Balázs** | 475 | INFO | GAZD | - |
+| **Csilla** | 460 | MŰV | INFO | - |
+| **Dániel** | 455 | INFO | GAZD | - |
+| **Eszter** | 440 | GAZD | MŰV | - |
+| **Fanni** | 430 | MŰV | GAZD | - |
+| **Gergő** | 410 | INFO | GAZD | MŰV |
+| **Hanna** | 400 | GAZD | INFO | - |
+| **Imre** | 390 | MŰV | - | - |
+| **Janka** | 380 | INFO | GAZD | MŰV |
+
+#### Gráf
+
+```mermaid
+graph LR
+    subgraph Diákok_és_Pontok
+        A[Adél: 490]
+        B[Balázs: 475]
+        C[Csilla: 460]
+        D[Dániel: 455]
+        E[Eszter: 440]
+        F[Fanni: 430]
+        G[Gergő: 410]
+        H[Hanna: 400]
+        I[Imre: 390]
+        J[Janka: 380]
+    end
+
+    subgraph Szakok_és_Kapacitás
+        INFO((INFO <br/> 3 hely))
+        GAZD((GAZD <br/> 3 hely))
+        MUV((MŰV <br/> 2 hely))
+    end
+
+    %% Végleges beosztás (Vastag élek)
+    A === INFO
+    B === INFO
+    D === INFO
+    
+    E === GAZD
+    G === GAZD
+    H === GAZD
+    
+    C === MUV
+    F === MUV
+
+    %% Elutasított jelentkezések (Szaggatott élek)
+    G -.-> INFO
+    J -.-> INFO
+    J -.-> GAZD
+    I -.-> MUV
+    J -.-> MUV
+
+```
+
+#### Az algoritmus lefutása (Lépésről lépésre)
+
+**1. Forduló: Mindenki az 1. helyre jelentkezik**
+* **INFO (3 hely):** Adél (490), Balázs (475), Dániel (455), Gergő (410), Janka (380).
+    * *Döntés:* Adél, Balázs és Dániel „ideiglenesen felvéve”. Gergő és Janka **elutasítva**.
+* **GAZD (3 hely):** Eszter (440), Hanna (400).
+    * *Döntés:* Mindketten „ideiglenesen felvéve” (maradt 1 szabad hely).
+* **MŰV (2 hely):** Csilla (460), Fanni (430), Imre (390).
+    * *Döntés:* Csilla és Fanni „ideiglenesen felvéve”. Imre **elutasítva**.
+
+**2. Forduló: Az elutasítottak (Gergő, Janka, Imre) a 2. helyre próbálkoznak**
+* **Gergő (410)** jelentkezik a **GAZD**-ra. Mivel volt üres hely, bekerül.
+* **Janka (380)** jelentkezik a **GAZD**-ra. Most már 4-en vannak (Eszter, Hanna, Gergő, Janka).
+    * *Rangsor:* Eszter (440) > Gergő (410) > Hanna (400) > Janka (380).
+    * *Döntés:* Janka **elutasítva**.
+* **Imre (390)**: Nincs 2. opciója, ő sajnos kiesett a rendszerből.
+
+**3. Forduló: Janka a 3. helyére próbálkozik**
+* **Janka (380)** jelentkezik a **MŰV**-re. Ott Csilla (460) és Fanni (430) van bent.
+    * *Döntés:* Janka pontszáma alacsonyabb, így a MŰV is **elutasítja**.
+
+---
+
+#### Végeredmény és Ponthatárok
+
+| Szak | Felvett diákok | Ponthatár (Minimum) |
+| :--- | :--- | :--- |
+| **INFO** | Adél, Balázs, Dániel | **455 pont** |
+| **GAZD** | Eszter, Gergő, Hanna | **400 pont** |
+| **MŰV** | Csilla, Fanni | **430 pont** |
+
+**Kimaradt:** Imre (390), Janka (380).
+
+#### Konklúzió
+A feladat jól mutatja, hogy a Gale-Shapley algoritmus hogyan alakítja ki a **ponthatárokat**. Például Hanna bejutott a GAZD-ra 400 ponttal, mert volt helye, míg Csilla 460 ponttal „erősebb” volt nála, de ő a MŰV-et választotta, ahol magasabb (430) lett a ponthatár. A rendszer stabil: senki nem tudna olyat mutatni, akinek kevesebb pontja van, de bejutott egy olyan helyre, ahová ő is vágyott.
+
+```js
+function assignStudentsToUniversities(students, programs) {
+    // 1. Előkészítés
+    let freeStudents = [...students];
+    let admissions = {}; // szak_nev -> [felvett_diakok_listaja]
+    
+    programs.forEach(p => admissions[p.name] = []);
+
+    // 2. Az algoritmus futtatása
+    while (freeStudents.length > 0) {
+        let student = freeStudents.shift();
+        
+        // Ha a diáknak nincs több megjelölt szaka, kiesik
+        if (student.prefs.length === 0) continue;
+
+        // Következő megjelölt szak lekérése
+        let targetProgramName = student.prefs.shift();
+        let program = programs.find(p => p.name === targetProgramName);
+        
+        let currentAdmitted = admissions[targetProgramName];
+        
+        // Ideiglenesen felvesszük a diákot
+        currentAdmitted.push(student);
+        
+        // Rangsoroljuk a jelentkezőket pontszám szerint (csökkenő)
+        currentAdmitted.sort((a, b) => b.score - a.score);
+
+        // Ha túlléptük a keretszámot, a leggyengébb kiesik
+        if (currentAdmitted.length > program.capacity) {
+            let rejectedStudent = currentAdmitted.pop();
+            freeStudents.push(rejectedStudent);
+        }
+    }
+
+    // 3. Eredmények formázása és ponthatárok számítása
+    const finalResults = {};
+    for (let progName in admissions) {
+        let admitted = admissions[progName];
+        finalResults[progName] = {
+            students: admitted.map(s => `${s.name} (${s.score})`),
+            minScore: admitted.length > 0 ? admitted[admitted.length - 1].score : "N/A"
+        };
+    }
+
+    return finalResults;
+}
+
+// --- Adatok bevitele ---
+const students = [
+    { name: "Adél", score: 490, prefs: ["INFO", "GAZD"] },
+    { name: "Balázs", score: 475, prefs: ["INFO", "GAZD"] },
+    { name: "Csilla", score: 460, prefs: ["MŰV", "INFO"] },
+    { name: "Dániel", score: 455, prefs: ["INFO", "GAZD"] },
+    { name: "Eszter", score: 440, prefs: ["GAZD", "MŰV"] },
+    { name: "Fanni", score: 430, prefs: ["MŰV", "GAZD"] },
+    { name: "Gergő", score: 410, prefs: ["INFO", "GAZD", "MŰV"] },
+    { name: "Hanna", score: 400, prefs: ["GAZD", "INFO"] },
+    { name: "Imre", score: 390, prefs: ["MŰV"] },
+    { name: "Janka", score: 380, prefs: ["INFO", "GAZD", "MŰV"] }
+];
+
+const programs = [
+    { name: "INFO", capacity: 3 },
+    { name: "GAZD", capacity: 3 },
+    { name: "MŰV", capacity: 2 }
+];
+
+// --- Futtatás és kiíratás ---
+const results = assignStudentsToUniversities(students, programs);
+
+console.log("=== FELVÉTELI EREDMÉNYEK ===");
+for (let prog in results) {
+    console.log(`\nSzak: ${prog}`);
+    console.log(`Ponthatár: ${results[prog].minScore}`);
+    console.log(`Felvettek: ${results[prog].students.join(", ")}`);
+}
+```
+
+```log
+=== FELVÉTELI EREDMÉNYEK ===
+
+Szak: INFO
+Ponthatár: 455
+Felvettek: Adél (490), Balázs (475), Dániel (455)
+
+Szak: GAZD
+Ponthatár: 400
+Felvettek: Eszter (440), Gergő (410), Hanna (400)
+
+Szak: MŰV
+Ponthatár: 430
+Felvettek: Csilla (460), Fanni (430)
+```
