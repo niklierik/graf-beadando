@@ -1024,3 +1024,249 @@ console.log("Kiválasztott projektek:", megoldas.map(m => m.name).join(", "));
 Maximálisan elvégezhető munkák száma: 3
 Kiválasztott projektek: P2: Interjú, P4: Esküvő, P6: Termékbemutató
 ```
+
+## Háromszögezett gráfok
+## Háromszögezett gráfok (Húrgráfok)
+
+A háromszögezett gráfok (más néven húrozott vagy merevkörű gráfok) a gráfelmélet egy kiemelt jelentőségű osztályát alkotják, mivel szerkezetük lehetővé teszi számos, egyébként nehéz (NP-hard) probléma hatékony megoldását.
+
+### Definíció
+Egy $G$ gráf **háromszögezett**, ha nem tartalmaz feszített $C_n$ kört $n \geq 4$ esetén. Ez azt jelenti, hogy a gráf minden legalább 4 hosszúságú körének van legalább egy **húrja** (olyan él, amely a kör két nem szomszédos pontját köti össze).
+
+---
+
+### Szerkezeti tulajdonságok és fogalmak
+
+A háromszögezett gráfok mélyebb elemzéséhez az alábbi fogalmak elengedhetetlenek:
+
+* **Minimális szeparátor:** Legyen $x$ és $y$ két nem szomszédos pont. Az $S \subset V(G)$ halmaz **$x,y$-szeparátor**, ha $x$ és $y$ különböző komponensbe kerül a $G \setminus S$ gráfban. $S$ akkor **minimális**, ha egyetlen valódi részhalmaza sem választja el $x$-et és $y$-t.
+    > **Tétel:** Egy gráf pontosan akkor háromszögezett, ha minden minimális szeparátora klikk (teljes részgráf).
+
+* **Szimpliciális pont:** Egy $x \in V(G)$ pont **szimpliciális**, ha szomszédainak halmaza, azaz $N(x)$ klikket feszít a gráfban.
+    > **Dirac-tétel:** Minden nem üres háromszögezett gráfban van legalább két szimpliciális pont (kivéve a teljes gráfokat, ahol minden pont az).
+
+---
+
+### Perfekt Eliminációs Séma (PES)
+
+A háromszögezett gráfok egyik legfontosabb jellemzője a pontok egy speciális sorrendbe állíthatósága.
+
+Az $x_1, x_2, \dots, x_n$ pontsorozat a $G$ gráf egy **perfekt eliminációs sémája (PES)**, ha minden $i \in \{1, \dots, n\}$ esetén az $x_i$ pont szimpliciális az $\{x_i, x_{i+1}, \dots, x_n\}$ pontok által feszített részgráfban.
+
+**Jelentősége:**
+* Egy gráf pontosan akkor háromszögezett, ha létezik hozzá PES.
+* A PES segítségével mohó módon, lineáris időben meghatározható a gráf:
+    1.  Kromatikus száma ($\chi(G)$)
+    2.  Maximális klikkmérete ($\omega(G)$)
+    3.  Maximális független csúcshalmaza ($\alpha(G)$)
+
+---
+
+### Kapcsolat más osztályokkal
+A háromszögezett gráfok a **perfekt gráfok** egy alosztályát alkotják. Minden intervallum gráf háromszögezett, de ez fordítva nem feltétlenül igaz (az intervallum gráfok a háromszögezett gráfok egy szűkebb halmazát jelentik).
+
+### Gyakorlati feladat: Adatbázis-konzisztencia és Húrgráfok
+
+Egy kórházi szakértői rendszer adatbázisában összefüggéseket tárolunk tünetek és diagnózisok között. A lekérdezések gyorsasága és a logikai ellentmondások elkerülése érdekében fontos, hogy az összefüggések gráfja **háromszögezett (húrgráf)** legyen. Ha a gráfban feszített $C_n (n \geq 4)$ kör található, a lekérdezés-optimalizáló algoritmusok hatékonysága jelentősen romlik.
+
+#### A probléma
+A jelenlegi rendszer a következő kapcsolatokat tartalmazza:
+* **Láz (L) — Köhögés (K)**
+* **Köhögés (K) — Tüdőgyulladás (T)**
+* **Tüdőgyulladás (T) — Nehézlégzés (N)**
+* **Nehézlégzés (N) — Láz (L)**
+
+Ez a struktúra egy **$C_4$ kört** alkot ($L-K-T-N-L$), amely nem tartalmaz húrt, tehát a gráf nem háromszögezett.
+
+#### Gráf
+
+```mermaid
+graph TD
+    %% Eredeti C4 kör csúcsai
+    L[Láz]
+    K[Köhögés]
+    T[Tüdőgyulladás]
+    N[Nehézlégzés]
+
+    %% Eredeti élek (a feszített kör)
+    L --- K
+    K --- T
+    T --- N
+    N --- L
+```
+
+#### Megoldás
+Ahhoz, hogy a gráfot háromszögezetté tegyük, be kell vezetnünk egy **húrt**.
+1.  **Beavatkozás:** Kössük össze a **Láz (L)** és a **Tüdőgyulladás (T)** pontokat egy új éllel.
+2.  **Eredmény:** A feszített $C_4$ kör megszűnik, helyette két darab $C_3$ (háromszög) keletkezik: $\{L, K, T\}$ és $\{L, N, T\}$.
+
+```mermaid
+graph TD
+    %% Eredeti C4 kör csúcsai
+    L[Láz]
+    K[Köhögés]
+    T[Tüdőgyulladás]
+    N[Nehézlégzés]
+
+    %% Eredeti élek (a feszített kör)
+    L --- K
+    K --- T
+    T --- N
+    N --- L
+
+    %% A húr, ami háromszögezi a gráfot
+    L -.-|Új él: Húr| T
+```
+
+#### Ellenőrzés: Perfekt Eliminációs Séma (PES)
+A javított gráfra felírható egy sorrend, ahol minden pont szimpliciális (szomszédai klikket alkotnak) az eltávolítás pillanatában:
+* **1. K:** Szomszédai ($L, T$) az új él miatt klikket alkotnak.
+* **2. N:** Szomszédai ($L, T$) szintén klikket alkotnak.
+* **3. L és T:** A megmaradt él triviálisan szimpliciális pontokat ad.
+
+**Konklúzió:** Az $L-T$ él behúzásával a rendszer szerkezete merevvé vált, így a diagnosztikai lekérdezések futási ideje lineárisra csökkent.
+
+#### Kód a problémához
+
+```js
+/**
+ * Háromszögezett gráf ellenőrző és javító algoritmus
+ */
+class ChordalGraphSolver {
+    constructor(vertices, edges) {
+        this.adj = new Map();
+        vertices.forEach(v => this.adj.set(v, new Set()));
+        edges.forEach(([u, v]) => {
+            this.adj.get(u).add(v);
+            this.adj.get(v).add(u);
+        });
+    }
+
+    // Ellenőrzi, hogy egy adott pont szimpliciális-e
+    isSimplicial(v, currentAdj) {
+        const neighbors = Array.from(currentAdj.get(v));
+        for (let i = 0; i < neighbors.length; i++) {
+            for (let j = i + 1; j < neighbors.length; j++) {
+                if (!currentAdj.get(neighbors[i]).has(neighbors[j])) {
+                    return { simplicial: false, missingEdge: [neighbors[i], neighbors[j]] };
+                }
+            }
+        }
+        return { simplicial: true };
+    }
+
+    // Megkeresi a Perfekt Eliminációs Sémát (PES) vagy a hibát
+    analyze() {
+        let tempAdj = new Map();
+        this.adj.forEach((neighbors, v) => tempAdj.set(v, new Set(neighbors)));
+        
+        const nodes = Array.from(tempAdj.keys());
+        const pes = [];
+        const missingEdges = [];
+
+        while (nodes.length > 0) {
+            let found = false;
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                const check = this.isSimplicial(node, tempAdj);
+                
+                if (check.simplicial) {
+                    pes.push(node);
+                    // Eltávolítjuk a pontot és a hozzá tartozó éleket
+                    const neighbors = tempAdj.get(node);
+                    neighbors.forEach(n => tempAdj.get(n).delete(node));
+                    tempAdj.delete(node);
+                    nodes.splice(i, 1);
+                    found = true;
+                    break;
+                } else {
+                    missingEdges.push(check.missingEdge);
+                }
+            }
+
+            if (!found) {
+                return {
+                    isChordal: false,
+                    suggestedChord: missingEdges[0],
+                    message: "A gráf nem háromszögezett. Feszített kört találtam."
+                };
+            }
+        }
+
+        return {
+            isChordal: true,
+            pes: pes,
+            message: "A gráf háromszögezett (Húrgráf)."
+        };
+    }
+}
+
+// --- Tesztelés a diagnosztikai feladattal ---
+
+const vertices = ['L', 'K', 'T', 'N'];
+const edges = [
+    ['L', 'K'], ['K', 'T'], ['T', 'N'], ['N', 'L']
+];
+
+const solver = new ChordalGraphSolver(vertices, edges);
+const result = solver.analyze();
+
+console.log("Eredmény:", result.message);
+if (!result.isChordal) {
+    console.log(`Javasolt húr a háromszögezéshez: ${result.suggestedChord.join(' - ')}`);
+} else {
+    console.log("Perfekt Eliminációs Séma (PES):", result.pes.join(' -> '));
+}
+
+// Kimenet várhatóan: 
+// Eredmény: A gráf nem háromszögezett. Feszített kört találtam.
+// Javasolt húr a háromszögezéshez: L - T (vagy K - N)
+```
+
+```log
+Eredmény: A gráf nem háromszögezett. Feszített kört találtam.
+Javasolt húr a háromszögezéshez: K - N
+```
+
+## Perfekt gráfok
+
+A perfekt gráfok a gráfelmélet egyik legfontosabb osztályát alkotják. Jelentőségüket az adja, hogy bennük a gráf globális tulajdonságai (színezhetőség) és lokális tulajdonságai (maximális klikkméret) szoros összhangban vannak.
+
+### Definíció
+Egy $G$ gráf **perfekt**, ha minden feszített $H \subseteq G$ részgráfjára teljesül az alábbi egyenlőség:
+$$\chi(H) = \omega(H)$$
+ahol:
+* $\chi(H)$ a gráf **kromatikus száma** (a minimális színszám, amivel a csúcsok kiszínezhetők úgy, hogy szomszédosak ne legyenek azonos színűek).
+* $\omega(H)$ a gráf **klikkszáma** (a legnagyobb teljes részgráf csúcsainak száma).
+
+### A Perfekt Gráf Tételek
+Claude Berge 1961-es felvetései után két alapvető tétel határozza meg ezt a területet:
+
+1.  **Gyenge perfekt gráf tétel (Lovász László, 1972):**
+    Egy gráf pontosan akkor perfekt, ha a komplementere ($\overline{G}$) is perfekt. Ez azt jelenti, hogy perfekt gráfokban a maximális független csúcshalmaz mérete ($\alpha(G)$) is megegyezik a minimális klikk-lefedés számával.
+
+2.  **Erős perfekt gráf tétel (Chudnovsky, Robertson, Seymour és Thomas, 2002):**
+    Egy gráf pontosan akkor perfekt, ha sem ő, sem a komplementere nem tartalmaz **feszített páratlan kört**, amelynek hossza legalább 5.
+    * Ezeket a tiltott részgráfokat (páratlan körök és komplementereik) **Berge-gráfoknak** is nevezik.
+
+
+### Fontosabb perfekt gráfosztályok
+Számos jól ismert gráfosztályról bebizonyosodott, hogy perfekt:
+* **Páros gráfok:** Itt $\omega(G) \leq 2$, és a színezéshez is maximum 2 szín kell.
+* **Intervallum gráfok:** Az időbeli átfedések modelljei mind perfektek.
+* **Háromszögezett (húr) gráfok:** Minden legalább 4 hosszú körüknek van húrja.
+* **Páros gráfok vonalgráfjai:** Az élszínezési problémáknál relevánsak.
+
+### Algoritmusok és jelentőség
+Míg az általános gráfoknál a klikkszám ($\omega$) és a kromatikus szám ($\chi$) meghatározása is **NP-nehéz** probléma, a perfekt gráfok esetében:
+* Létezik **polinomidőben** futó algoritmus a kiszámításukra (bár ezek gyakran komplexek, például szemidefinit programozást igényelnek).
+* Sok speciális osztályukra (pl. intervallum gráfok) rendkívül gyors, lineáris idejű **mohó algoritmusok** is rendelkezésre állnak.
+
+A perfekt gráfok elmélete hidat képez a kombinatorikus optimalizálás, a gráfalgoritmusok és a matematikai programozás között.
+
+### Összegzés: Mikor NEM perfekt egy gráf?
+Egy gráf biztosan nem perfekt, ha tartalmaz:
+* Egy feszített $C_5, C_7, \dots$ kört (páratlan lyuk).
+* Egy feszített páratlan kör komplementerét (páratlan anti-lyuk).
+
+**Példa:** Az 5 hosszú kör ($C_5$) nem perfekt, mert $\omega(C_5) = 2$ (csak élek vannak benne, háromszögek nincsenek), de a színezéséhez $\chi(C_5) = 3$ színre van szükség.
