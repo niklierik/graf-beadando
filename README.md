@@ -625,16 +625,8 @@ $$u v \in E \iff I_u \cap I_v \neq \emptyset$$
 - **Húrgráfok:** Nem tartalmaznak 3-nál hosszabb indukált kört (azaz minden 4 vagy több hosszú körnek van "húrja").
 - **Mohó algoritmus:** Sok NP-nehéz probléma (színezés, maximális független csúcshalmaz) intervallum gráfokon lineáris időben, mohó módon megoldható.
 
-### Lefedő halmaz
+### Lefedő halmaz: Az Influencer Kampány Optimalizálása
 
-**Szituáció:** Adott több kifizetendő számla, mindegyikhez tartozik egy határidő-intervallum $[t_i, T_i]$, amikor rendezhető. Keressük a legkevesebb időpontot, amikor a postára menve az összes esedékes számlát be tudjuk fizetni.
-
-- **Modell:** Az intervallumok egy rendszert alkotnak. Keressük a minimális méretű $K \subset \mathbb{R}$ halmazt, amely minden intervallumot metsz.
-- **Megoldás:** Mohó algoritmus. Mindig a legkorábban véget érő intervallum ($T_{min}$) végpontjába teszünk egy pontot, majd töröljük az általa lefedett intervallumokat.
-
-#### Gyakorlati feladat: Az Influencer Kampány Optimalizálása
-
-#### A szituáció
 Egy marketingügynökség egy új terméket akar népszerűsíteni. 6 különböző influencer vállalta, hogy készít egy-egy "élő bejelentkezést" (live stream) a saját csatornáján a hétvége folyamán. A cégnek delegálnia kell egy moderátort, aki jelen van a streamek alatt, hogy válaszoljon a kérdésekre. A moderátor óradíja magas, ezért a cél az, hogy **a lehető legkevesebb időpontban** csatlakozzon be a moderátor úgy, hogy minden influencer adásába legalább egyszer "belépjen".
 
 #### Az adatok (időintervallumok szombat 10:00-tól számítva, órában)
@@ -701,7 +693,7 @@ Az optimális megoldás: A moderátornak elég **13:00-kor** és **17:00-kor** b
 
 > **Miért optimális?** Mert az Influencer 1 [0,3] és az Influencer 6 [4,7] intervallumok teljesen diszjunktak (nincs átfedésük). Ezért matematikailag lehetetlen 2-nél kevesebb ponttal lefedni a rendszert, hiszen ehhez a két adáshoz mindenképp két külön időpont kell.
 
-#### JS kód
+#### Kód
 
 ```js
 /**
@@ -759,16 +751,276 @@ console.log("Optimális időpontok a moderátor belépéséhez:", result);
 Optimális időpontok a moderátor belépéséhez: [ 3, 7 ]
 ```
 
-### Színezés
+### Színezés: Konferencia-terem foglalás
 
-**Szituáció:** Egy konferencián több előadást kell megtartani, amelyek kezdési és befejezési időpontjai adottak ($I_i$). Hány tárgyalóra van szükségünk minimum, ha az egymással időben átfedő előadások nem lehetnek ugyanabban a teremben?
+Egy technológiai konferencián 6 különböző workshopot kell megtartani egy délután alatt. Mindegyik workshopnak fix kezdési és befejezési időpontja van. Mivel a workshopok zavarják egymást, két olyan esemény, amely időben átfedi egymást, nem kerülhet ugyanabba a terembe.
 
-- **Modell:** A feladat a gráf **minimális színezése**. A színek reprezentálják a termeket. Ha két intervallum metszi egymást, a gráfban él van köztük, tehát különböző színt (termet) kell kapniuk.
-- **Megoldás:** Az intervallumokat jobb végpontjuk szerint csökkenő sorrendbe rendezzük, és a legkisebb szabad "színt" (terem számot) osztjuk ki nekik.
+**A cél:** Határozd meg a **minimális számú termet**, amelyre szükség van az összes workshop lebonyolításához.
 
-### Maximális független halmaz
+#### Az adatok (Időintervallumok órában kifejezve)
+1.  **A workshop (AI alapok):** [10, 12]
+2.  **B workshop (Web design):** [11, 13]
+3.  **C workshop (Cybersecurity):** [10.5, 11.5]
+4.  **D workshop (Cloud computing):** [13.5, 15]
+5.  **E workshop (Data science):** [13, 14.5]
+6.  **F workshop (Blockchain):** [14.5, 16]
 
-**Szituáció:** Egy szerverhez különböző kérések érkeznek, amik adott időtartamig foglalnák le a teljes kapacitást. Mivel egyszerre csak egy kérést tud kiszolgálni, mi a legtöbb kérés, amit teljesíteni tud?
+#### Gráf
 
-- **Modell:** Keressük a gráf **maximális független csúcshalmazát** (olyan intervallumokat, amelyek közül semelyik kettő nem metszi egymást).
-- **Megoldás:** Hasonló a lefedő problémához: mindig a legkorábban véget érő, még lehetséges intervallumot választjuk ki.
+A gráfban minden csúcs egy workshopot jelöl, és két csúcs között akkor van él, ha a workshopok időben átfedik egymást (ütköznek).
+
+```mermaid
+graph LR
+    %% Csúcsok (Intervallumok)
+    A["A: AI alapok [10, 12]"]
+    B["B: Web design [11, 13]"]
+    C["C: Cybersecurity [10.5, 11.5]"]
+    D["D: Cloud [13.5, 15]"]
+    E["E: Data science [13, 14.5]"]
+    F["F: Blockchain [14.5, 16]"]
+
+    %% Élek (Átfedések)
+    A --- B
+    A --- C
+    B --- C
+    
+    B --- E
+    
+    D --- E
+    D --- F
+    E --- F
+
+    %% Csoportosítás a színezés (termek) alapján
+    subgraph Terem_1
+        B
+        E
+        F
+    end
+
+    subgraph Terem_2
+        A
+        D
+    end
+
+    subgraph Terem_3
+        C
+    end
+```
+
+#### Megoldás az intervallum színezési algoritmussal
+
+Az optimális színezés (teremkiosztás) érdekében az eseményeket a befejezési időpontjuk (jobb végpont) szerint csökkenő sorrendbe rendezzük, és mohó módon kiosztjuk a legkisebb szabad sorszámú termet.
+
+**1. Lépés: Rendezés a befejezés szerint (csökkenő)**
+1.  F: [14.5, **16**]
+2.  D: [13.5, **15**]
+3.  E: [13, **14.5**]
+4.  B: [11, **13**]
+5.  A: [10, **12**]
+6.  C: [10.5, **11.5**]
+
+**2. Lépés: Termek kiosztása (Színezés)**
+* **F [14.5, 16]:** Megkapja az **1. termet**.
+* **D [13.5, 15]:** Átfedi F-et az [14.5, 15] tartományban. Az 1. terem foglalt, így megkapja a **2. termet**.
+* **E [13, 14.5]:** F-fel csak a végponton érintkezik (14.5), de D-vel átfedésben van [13.5, 14.5]. Mivel F már nem használja az 1. termet ebben az időben, az E megkaphatja az **1. termet**.
+* **B [11, 13]:** Sem F-fel, sem D-vel, sem E-vel nem fed át. Az **1. terem** szabad számára.
+* **A [10, 12]:** Átfedi B-t [11, 12]. Az 1. terem foglalt, így megkapja a **2. termet**.
+* **C [10.5, 11.5]:** Átfedi A-t és B-t is. Az 1. és 2. terem foglalt, így megkapja a **3. termet**.
+
+#### Konklúzió
+A minimális teremigény: **3**.
+
+#### Kód
+
+```js
+/**
+ * Intervallum gráf színezése (Teremfoglalás optimalizálás)
+ * @param {Array} events - Az események listája: { name: string, start: number, end: number }
+ * @returns {Object} - A termek száma és a hozzájuk rendelt események
+ */
+function solveRoomAssignment(events) {
+    if (events.length === 0) return { roomCount: 0, assignments: {} };
+
+    // 1. Lépés: Rendezés a JOBB végpontok (befejezési idő) szerint CSÖKKENŐ sorrendbe
+    // (A megadott elméleti stratégia alapján)
+    const sortedEvents = [...events].sort((a, b) => b.end - a.end);
+
+    const rooms = []; // Itt tároljuk az egyes termekbe osztott eseményeket
+
+    // 2. Lépés: Iterálás az eseményeken
+    for (let event of sortedEvents) {
+        let assigned = false;
+
+        // Megpróbáljuk betenni az eseményt egy már meglévő terembe
+        for (let i = 0; i < rooms.length; i++) {
+            // Ellenőrizzük, van-e ütközés a teremben lévő eseményekkel
+            const hasConflict = rooms[i].some(e => 
+                event.start < e.end && event.end > e.start
+            );
+
+            if (!hasConflict) {
+                rooms[i].push(event);
+                assigned = true;
+                break;
+            }
+        }
+
+        // Ha egyik létező terembe sem fér be, nyitunk egy újat
+        if (!assigned) {
+            rooms.push([event]);
+        }
+    }
+
+    return {
+        roomCount: rooms.length,
+        schedule: rooms.map((room, index) => ({
+            roomNumber: index + 1,
+            events: room.map(e => `${e.name} (${e.start}-${e.end})`)
+        }))
+    };
+}
+
+// --- Adatok bevitele ---
+const workshops = [
+    { name: "A: AI alapok", start: 10, end: 12 },
+    { name: "B: Web design", start: 11, end: 13 },
+    { name: "C: Cybersecurity", start: 10.5, end: 11.5 },
+    { name: "D: Cloud computing", start: 13.5, end: 15 },
+    { name: "E: Data science", start: 13, end: 14.5 },
+    { name: "F: Blockchain", start: 14.5, end: 16 }
+];
+
+const result = solveRoomAssignment(workshops);
+
+// --- Eredmény kiíratása ---
+console.log(`Minimálisan szükséges termek száma: ${result.roomCount}`);
+console.log("Beosztás:");
+result.schedule.forEach(r => {
+    console.log(`  ${r.roomNumber}. Terem: ${r.events.join(", ")}`);
+});
+```
+
+```log
+Minimálisan szükséges termek száma: 3
+Beosztás:
+  1. Terem: F: Blockchain (14.5-16), E: Data science (13-14.5), B: Web design (11-13)
+  2. Terem: D: Cloud computing (13.5-15), A: AI alapok (10-12)
+  3. Terem: C: Cybersecurity (10.5-11.5)
+```
+
+### Maximális független halmaz: Szabadúszó projekt-ütemezése
+
+Egy szabadúszó videóvágóhoz egy napon 7 különböző megbízás érkezik. Mindegyik munka teljes odafigyelést igényel (nem tud egyszerre két projekten dolgozni), és fix időablakban kell elvégezni őket (például élő közvetítések vágása). A vágó fix díjas megbízásokat kap, ezért az a célja, hogy **a lehető legtöbb munkát** vállalja el a nap folyamán.
+
+#### Az adatok (Időintervallumok órában)
+1.  **P1 (Reklámfilm):** [8, 11]
+2.  **P2 (Interjú):** [9, 10.5]
+3.  **P3 (Zenei klip):** [10, 12]
+4.  **P4 (Esküvő):** [11.5, 14]
+5.  **P5 (Social media videó):** [13, 15]
+6.  **P6 (Termékbemutató):** [14.5, 17]
+7.  **P7 (YouTube vlog):** [16, 18]
+
+#### Megoldás a mohó algoritmussal
+
+Az intervallum gráfoknál a maximális független halmazt úgy kapjuk meg a leggyorsabban, ha a **befejezési időpontok (jobb végpontok) szerint növekvő** sorrendbe rendezünk, és mindig a legkorábban végződőt választjuk, ami nem ütközik az eddigiekkel.
+
+**1. Lépés: Rendezés a befejezés szerint (növekvő)**
+1.  P2: [9, **10.5**]
+2.  P1: [8, **11**]
+3.  P3: [10, **12**]
+4.  P4: [11.5, **14**]
+5.  P5: [13, **15**]
+6.  P6: [14.5, **17**]
+7.  P7: [16, **18**]
+
+**2. Lépés: Kiválasztás (Mohó módon)**
+* **Választjuk P2-t [9, 10.5]:** Ez végződik legkorábban. (A vágó 10:30-kor végez).
+* **Következő jelölt P1 [8, 11]:** Ütközik P2-vel (már 8-kor kezdődne). **Kihagyjuk.**
+* **Következő jelölt P3 [10, 12]:** Ütközik P2-vel (10-kor kezdődik). **Kihagyjuk.**
+* **Választjuk P4 [11.5, 14]:** Nem ütközik az utolsó választottal (P2 10:30-as végével). (A vágó 14:00-kor végez).
+* **Következő jelölt P5 [13, 15]:** Ütközik P4-gyel (13-kor kezdődik). **Kihagyjuk.**
+* **Választjuk P6 [14.5, 17]:** Nem ütközik P4-gyel (14:30-kor kezdődik). (A vágó 17:00-kor végez).
+* **Következő jelölt P7 [16, 18]:** Ütközik P6-tal (16-kor kezdődik). **Kihagyjuk.**
+
+#### Konklúzió
+A maximális független halmaz mérete **3**. A vágó maximum 3 projektet tud elvégezni: **P2, P4 és P6**.
+
+#### Gráf
+
+Ebben a gráfban a **maximális független halmaz** olyan csúcsok csoportja, amelyek között **egyáltalán nincs él**.
+
+```mermaid
+graph LR
+    P1["P1 [8, 11]"]
+    P2["P2 [9, 10.5]"]
+    P3["P3 [10, 12]"]
+    P4["P4 [11.5, 14]"]
+    P5["P5 [13, 15]"]
+    P6["P6 [14.5, 17]"]
+    P7["P7 [16, 18]"]
+
+    %% Ütközések (Élek)
+    P1 --- P2
+    P1 --- P3
+    P2 --- P3
+    P3 --- P4
+    P4 --- P5
+    P5 --- P6
+    P6 --- P7
+
+    %% Kiemelés: a választott független halmaz
+    style P2 fill:#4CAF50,stroke:#333,color:#fff
+    style P4 fill:#4CAF50,stroke:#333,color:#fff
+    style P6 fill:#4CAF50,stroke:#333,color:#fff
+```
+
+#### Kód
+
+```javascript
+/**
+ * Maximális független halmaz keresése (Ütemezés optimalizálás)
+ * @param {Array} jobs - { name: string, start: number, end: number }
+ * @returns {Array} - A kiválasztott, egymással nem ütköző munkák listája
+ */
+function solveMaxIndependentSet(jobs) {
+    if (jobs.length === 0) return [];
+
+    // 1. Lépés: Rendezés a JOBB végpontok szerint NÖVEKVŐ sorrendbe
+    const sortedJobs = [...jobs].sort((a, b) => a.end - b.end);
+
+    const selectedJobs = [];
+    let lastFinishTime = -Infinity;
+
+    // 2. Lépés: Mohó kiválasztás
+    for (let job of sortedJobs) {
+        // Ha a munka kezdete nem korábbi, mint az utolsó befejezése (nincs átfedés)
+        if (job.start >= lastFinishTime) {
+            selectedJobs.push(job);
+            lastFinishTime = job.end;
+        }
+    }
+
+    return selectedJobs;
+}
+
+const munkak = [
+    { name: "P1: Reklám", start: 8, end: 11 },
+    { name: "P2: Interjú", start: 9, end: 10.5 },
+    { name: "P3: Zenei klip", start: 10, end: 12 },
+    { name: "P4: Esküvő", start: 11.5, end: 14 },
+    { name: "P5: Social media", start: 13, end: 15 },
+    { name: "P6: Termékbemutató", start: 14.5, end: 17 },
+    { name: "P7: Vlog", start: 16, end: 18 }
+];
+
+const megoldas = solveMaxIndependentSet(munkak);
+
+console.log("Maximálisan elvégezhető munkák száma:", megoldas.length);
+console.log("Kiválasztott projektek:", megoldas.map(m => m.name).join(", "));
+```
+
+```log
+Maximálisan elvégezhető munkák száma: 3
+Kiválasztott projektek: P2: Interjú, P4: Esküvő, P6: Termékbemutató
+```
