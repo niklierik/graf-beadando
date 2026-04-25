@@ -1621,3 +1621,384 @@ Szak: MŰV
 Ponthatár: 430
 Felvettek: Csilla (460), Fanni (430)
 ```
+
+## Scarf algoritmus
+
+## Scarf-algoritmus: Elméleti áttekintés
+
+A Scarf-algoritmus (Herbert Scarf, 1967) egy alapvető matematikai eljárás a játékelméletben és a gazdasági modellezésben. Elsődleges célja **egyensúlyi pontok** (például a mag – *core*) létezésének bizonyítása és megkeresése olyan komplex rendszerekben, ahol a hagyományos piaci mechanizmusok nem feltétlenül működnek.
+
+### Alapvetés
+Az algoritmus a stabil párosítások (Gale-Shapley) és a Sperner-lemma közötti kapcsolatot használja ki. Míg a Gale-Shapley páros gráfokon dolgozik, Scarf eljárása alkalmas **n-személyes játékok** és **oszthatatlan javak** (pl. házcsere, szervátültetés) elemzésére is.
+
+---
+
+### Működési elv
+Az algoritmus egy kombinatorikus keresési folyamat, amely egy speciális mátrixszerkezetet (Scarf-mátrix) használ.
+
+1.  **Preferenciák leírása:** Minden résztvevőhöz egy vektort és egy preferenciarangsort rendelünk.
+2.  **Bázis-csere (Pivoting):** Hasonlóan a szimplex módszerhez, az algoritmus pontról pontra halad egy szubszimplexen keresztül. 
+3.  **Domináns halmaz keresése:** A folyamat olyan pontot keres, amely "kiegyensúlyozott" (balanced). Ez azt jelenti, hogy nem létezik olyan koalíció, amelynek tagjai egymás között jobban járnának, mint az aktuális felosztással.
+
+
+
+---
+
+### A Scarf-lemma jelentősége
+A lemma kimondja, hogy minden olyan játékban, amely rendelkezik egy bizonyos technikai tulajdonsággal (komprehenzivitás és "balancedness"), létezik **nem üres mag**. Ez garantálja, hogy a rendszerben kialakítható egy stabil állapot.
+
+---
+
+### Gyakorlati alkalmazások
+A Scarf-algoritmus elméleti alapjai vezettek a modernebb **mechanizmus tervezési** (mechanism design) eljárásokhoz:
+
+* **Házcsere-problémák (Housing Market):** Ahol a résztvevők saját javaikat cserélik el egymás között pénzhasználat nélkül.
+* **Vese-csere programok:** A Scarf-algoritmus általánosításai (pl. TTC - Top Trading Cycles) segítettek a donor-láncok stabil kialakításában.
+* **Oszthatatlan javak elosztása:** Amikor a tárgyak nem darabolhatóak, és a piaci ár nem határozható meg könnyen.
+
+---
+
+### Összehasonlítás a Gale-Shapley-vel
+
+| Szempont | Gale-Shapley | Scarf-algoritmus |
+| :--- | :--- | :--- |
+| **Gráftípus** | Páros gráf (pl. férfi-nő, diák-szak) | Általános hálózat / n-személyes |
+| **Erőforrás** | Hozzárendelés (Matching) | Csere és koalíciók (Core) |
+| **Kimenet** | Stabil párosítás | Egyensúlyi pont (Core) |
+| **Bonyolultság** | Alacsony (lineáris/polinomiális) | Magasabb (kombinatorikus keresés) |
+
+> **Megjegyzés:** A Scarf-algoritmus jelentősége abban áll, hogy matematikai garanciát ad a stabilitásra olyan helyzetekben is, ahol a piaci verseny önmagában káoszhoz vezetne.
+
+A Scarf-algoritmus legszemléletesebb gyakorlati példája a **lakáscsere-piac** (Housing Market), ahol nincs pénzmozgás, csak közvetlen csere, és a javak (lakások) oszthatatlanok.
+
+---
+
+### Körkörös lakáscsere 
+
+### A szituáció
+Három tulajdonos (**A, B, C**) egy-egy lakással rendelkezik (**L1, L2, L3**). Mindhárman szeretnének elköltözni, de csak egymás között tudnak cserélni. A cél egy olyan csere-párosítás (vagy kör) kialakítása, amely a **magban (core)** van – azaz senki nem tudna egy másik alcsoporttal (koalícióval) jobban járni, mint a kapott eredménnyel.
+
+### Adatok
+
+**1. Kezdeti állapot (Tulajdonjog):**
+* **A** tulajdona: **L1**
+* **B** tulajdona: **L2**
+* **C** tulajdona: **L3**
+
+**2. Preferencialisták (Rangsor):**
+
+| Tulajdonos | 1. választás | 2. választás | 3. választás |
+| :--- | :--- | :--- | :--- |
+| **A** | L2 | L3 | L1 |
+| **B** | L3 | L1 | L2 |
+| **C** | L1 | L2 | L3 |
+
+---
+
+### A megoldás menete (Scarf/Top Trading Cycles elve alapján)
+
+Az algoritmus keresi a "domináns köröket":
+
+1.  **Igények jelzése:**
+    * **A** rámutat **L2**-re (B lakása).
+    * **B** rámutat **L3**-re (C lakása).
+    * **C** rámutat **L1**-re (A lakása).
+
+2.  **Kör azonosítása:**
+    * Kialakult egy teljes kör: **A → L2(B) → L3(C) → L1(A)**.
+
+3.  **Végrehajtás:**
+    * A kör mentén mindenki megkapja az általa mutatott lakást, és elhagyják a piacot.
+
+
+
+#### Végeredmény
+* **A** megkapja **L2**-t.
+* **B** megkapja **L3**-at.
+* **C** megkapja **L1**-et.
+
+```mermaid
+graph TD
+    %% Személyek és az eredeti tulajdonuk
+    subgraph Tulajdonosok_és_Lakások
+        A["A gazda (L1)"]
+        B["B gazda (L2)"]
+        C["C gazda (L3)"]
+    end
+
+    %% Preferenciák jelzése (Ki mit akar)
+    A -- "1. helyen preferálja" --> L2((L2))
+    B -- "1. helyen preferálja" --> L3((L3))
+    C -- "1. helyen preferálja" --> L1((L1))
+
+    %% Tulajdonosi lánc (Ki birtokolja)
+    L2 -. "tulajdonosa" .-> B
+    L3 -. "tulajdonosa" .-> C
+    L1 -. "tulajdonosa" .-> A
+
+    %% A kialakult stabil kör kiemelése
+    subgraph Stabil_Csere_Kor
+        A ===> B
+        B ===> C
+        C ===> A
+    end
+
+    %% Megjegyzések
+    classDef owner fill:#666,stroke:#333,stroke-width:2px;
+    classDef house fill:#999,stroke:#333,stroke-width:2px;
+    class A,B,C owner;
+    class L1,L2,L3 house;
+```
+
+#### Miért ez a Scarf-egyensúly?
+
+* **Egyéni racionalitás:** Mindenki jobb (vagy nem rosszabb) lakást kapott, mint a sajátja.
+* **Koalíciós stabilitás:** Vegyük például **A**-t és **B**-t. Összeállhatnának ketten? Ha **A** és **B** cserélne, **A** megkapná **L2**-t (ez neki jó), de **B** megkapná **L1**-et. Viszont **B**-nek az **L1** csak a második legjobb opció, és tudja, hogy a teljes körben (C-vel együtt) megkaphatja az **L3**-at, ami az első helyen van nála. Tehát **B**-nek nem éri meg kiválni a hármas körből.
+
+#### Mi történne, ha nem lenne kör?
+Ha a preferenciák olyanok lennének, hogy nem alakul ki ilyen tiszta kör (pl. mindenki ugyanazt az egy lakást akarja), a Scarf-algoritmus akkor is garantálja egy olyan állapot megtalálását, ahol egyetlen csoport (koalíció) sem tudna "lázadni" és egymás között jobb üzletet kötni.
+
+#### Mi a különbség a Gale-Shapley-hez képest ebben a feladatban?
+* Itt **nincsenek külön oldalak** (mint férfiak és nők). Mindenki egyszerre "kínáló" (van lakása) és "kereső" (akar egy lakást).
+* A Scarf-algoritmus az **oszthatatlanságot** és a **tulajdonjogot** kezeli egyszerre, biztosítva, hogy a csere után senki ne érezze úgy, hogy a saját tulajdonát használva jobban is járhatott volna.
+
+#### Kód
+
+```js
+/**
+ * Scarf-típusú lakáscsere algoritmus (TTC)
+ * Tulajdonosok: A, B, C
+ * Lakások: L1, L2, L3
+ */
+function stabilLakasCsere(adatok) {
+    let piac = [...adatok];
+    let eredmeny = [];
+
+    while (piac.length > 0) {
+        let mutatasok = new Map();
+        
+        // 1. Mindenki rámutat a kedvenc elérhető lakásának jelenlegi gazdájára
+        piac.forEach(szemely => {
+            let kedvencLakas = szemely.preferenciak.find(l => 
+                piac.some(p => p.sajatLakas === l)
+            );
+            
+            let gazda = piac.find(p => p.sajatLakas === kedvencLakas);
+            mutatasok.set(szemely.nev, gazda.nev);
+        });
+
+        // 2. Kör keresése (Scarf-lemma alapján garantáltan van ilyen)
+        let kor = [];
+        let bejart = new Set();
+        let aktualis = piac[0].nev;
+
+        while (!bejart.has(aktualis)) {
+            bejart.add(aktualis);
+            aktualis = mutatasok.get(aktualis);
+        }
+
+        let startNode = aktualis;
+        do {
+            kor.push(aktualis);
+            aktualis = mutatasok.get(aktualis);
+        } while (aktualis !== startNode);
+
+        // 3. A körben résztvevők megkapják az igényelt lakást és kilépnek
+        kor.forEach(nev => {
+            let szemely = piac.find(p => p.nev === nev);
+            let kitolKapjaNev = mutatasok.get(nev);
+            let kitolKapja = piac.find(p => p.nev === kitolKapjaNev);
+            
+            eredmeny.push({
+                tulajdonos: szemely.nev,
+                kapottLakas: kitolKapja.sajatLakas
+            });
+        });
+
+        // Piac frissítése: a kör tagjai elmennek
+        piac = piac.filter(p => !kor.includes(p.nev));
+    }
+
+    return eredmeny;
+}
+
+// --- Adatok az eredeti feladatleírás alapján ---
+const adatok = [
+    { nev: "A", sajatLakas: "L1", preferenciak: ["L2", "L3", "L1"] },
+    { nev: "B", sajatLakas: "L2", preferenciak: ["L3", "L1", "L2"] },
+    { nev: "C", sajatLakas: "L3", preferenciak: ["L1", "L2", "L3"] }
+];
+
+// --- Végrehajtás ---
+const veglegesParositas = stabilLakasCsere(adatok);
+
+console.log("=== SCARF-EGYENSÚLYI EREDMÉNY ===");
+veglegesParositas.forEach(p => {
+    console.log(`${p.tulajdonos} tulajdonos megkapta: ${p.kapottLakas}`);
+});
+```
+
+```log
+=== SCARF-EGYENSÚLYI EREDMÉNY ===
+A tulajdonos megkapta: L2
+B tulajdonos megkapta: L3
+C tulajdonos megkapta: L1
+```
+
+## $\Delta-Y$ transzformáció és gráfredukció
+
+Az elektromos hálózatok gráfelméleti modelljében a bonyolult ellenállás-hálózatok egyszerűsítésére szolgáló módszer. A cél a gráf méretének csökkentése az eredő ellenállás megőrzése mellett.
+
+### A $\Delta-Y$ transzformáció
+Egy háromszög ($K_3$) alakú elrendezés helyettesíthető egy csillag ($K_{1,3}$) alakú elrendezéssel.
+* **$\Delta$ (delta):** Három csomópont ($i, j, k$) közötti élek ellenállásai: $R_{ij}, R_{jk}, R_{ik}$.
+* **$Y$ (csillag):** Egy új belső pont ($\ell$) és a csomópontok közötti ágak ellenállása.
+* **Képlet (példa):** Az $i$ ponthoz csatlakozó új ellenállás:
+    $$R_{i\ell} = \frac{R_{ij} \cdot R_{ik}}{R_{ij} + R_{jk} + R_{ik}}$$
+
+
+
+---
+
+### Soros-párhuzamos redukciós lépések
+A $\Delta-Y$ transzformáció mellett az alábbi alapműveletek (R0–R3) segítik a gráf redukálását:
+
+* **R0 (Huroktörlés):** Önhurok (egy pontba visszatérő él) eltávolítása.
+* **R1 (Levél törlése):** Elsőfokú pont és a hozzá tartozó él törlése.
+* **R2 (Soros redukció):** Másodfokú pont törlése; a két csatlakozó élet egyetlen, az ellenállások összegével jellemezhető élre cseréljük.
+* **R3 (Párhuzamos redukció):** Két pont közötti párhuzamos élek helyettesítése egyetlen éllel.
+
+---
+
+### $\Delta-Y$-redukálhatóság
+Egy gráfosztály akkor **$\Delta-Y$-redukálható**, ha a fenti transzformációk és redukciók sorozatos alkalmazásával a gráf mérete folyamatosan csökkenthető.
+
+* **Terminális pontok:** Az eljárás végén megmaradó csomópontok, amelyeket a fenti szabályokkal már nem lehet tovább törölni vagy redukálni.
+* **Jelentősége:** Segít meghatározni, hogy egy hálózat elemi úton kiszámítható-e, vagy komplexebb mátrixos módszereket igényel.
+
+### Hídkapcsolat eredő ellenállása
+
+Határozzuk meg az **A** és **B** pontok közötti eredő ellenállást egy olyan hídkapcsolásban (Wheatstone-híd), ahol minden ág ellenállása $R = 120\ \Omega$. A hálózat nem redukálható pusztán soros vagy párhuzamos szabályokkal.
+
+
+```mermaid
+graph LR
+    A((A)) ---|120Ω| F((Fenti))
+    A ---|120Ω| L((Lenti))
+    F ---|120Ω| L
+    F ---|120Ω| B((B))
+    L ---|120Ω| B((B))
+```
+
+#### Megoldás $\Delta-Y$ transzformációval
+
+1.  **$\Delta \rightarrow Y$ átalakítás:** A bal oldali háromszöget ($A$ pont + híd két vége) csillaggá alakítjuk. Az új ágak ellenállása ($R_y$):
+    $$R_y = \frac{120 \cdot 120}{120 + 120 + 120} = \mathbf{40\ \Omega}$$
+
+2.  **Soros redukció (R2):** A csillagpont utáni ágakban az új $40\ \Omega$-os és a megmaradt eredeti $120\ \Omega$-os ellenállások sorba kerülnek:
+    $$R_{ág} = 40 + 120 = \mathbf{160\ \Omega}$$
+
+```mermaid
+graph LR
+    A((A)) ---|40Ω| P((P))
+    P ---|40Ω| F((Fenti))
+    P ---|40Ω| L((Lenti))
+    F ---|120Ω| B((B))
+    L ---|120Ω| B((B))
+```
+
+3.  **Párhuzamos redukció (R3):** A két párhuzamos $160\ \Omega$-os ág eredője:
+    $$R_p = \frac{160 \cdot 160}{160 + 160} = \mathbf{80\ \Omega}$$
+
+4.  **Végső összegzés:** A bemeneti $40\ \Omega$ és a párhuzamos rész eredője soros:
+    $$R_{eredő} = 40 + 80 = \mathbf{120\ \Omega}$$
+
+
+```mermaid
+graph LR
+    A((A)) ---|40Ω| P((P))
+    P ---|80Ω| B((B))
+    
+    subgraph Eredő
+    direction LR
+    A_final((A)) ---|120Ω| B_final((B))
+    end
+```
+
+
+#### Összegző táblázat a redukcióról
+
+| Lépés | Alkalmazott szabály | Eredmény |
+| :--- | :--- | :--- |
+| 1. | **$\Delta-Y$ transzformáció** | A hurok megszűnik, belső csomópont jön létre. |
+| 2. | **R2 (Soros)** | Az ágakban lévő ellenállások összeadódnak. |
+| 3. | **R3 (Párhuzamos)** | A két ág egyetlen eredőre egyszerűsödik. |
+| 4. | **R2 (Soros)** | Megkapjuk a két terminál közötti végső értéket. |
+
+#### Kód
+
+```js
+/**
+ * Ellenállás-hálózat redukáló (Delta-Y fókusszal)
+ */
+class HalozatRedukalo {
+    // Delta-Y transzformáció: R1, R2, R3 (delta élek) -> Ry (csillag ellenállás)
+    static deltaToWye(r1, r2, r3) {
+        const sum = r1 + r2 + r3;
+        return {
+            ra: (r1 * r2) / sum,
+            rb: (r1 * r3) / sum,
+            rc: (r2 * r3) / sum
+        };
+    }
+
+    // R3: Párhuzamos redukció
+    static parhuzamos(r1, r2) {
+        return (r1 * r2) / (r1 + r2);
+    }
+
+    // R2: Soros redukció
+    static soros(r1, r2) {
+        return r1 + r2;
+    }
+}
+
+// --- A konkrét feladat megoldása ---
+
+console.log("--- Hídkapcsolás redukciója ---");
+
+const R = 120; // Minden ellenállás 120 Ohm
+
+// 1. Lépés: Bal oldali Delta (A-F-L csúcsok) -> Y transzformáció
+// Mivel minden R egyenlő, az új ágak is egyenlőek lesznek
+const yAgak = HalozatRedukalo.deltaToWye(R, R, R);
+console.log(`1. Delta-Y utáni új ágak: ${yAgak.ra} Ω`); 
+
+// 2. Lépés: Soros redukció az ágakban (P-F-B és P-L-B útvonalak)
+// Az Y két ága sorba kerül a maradék két eredeti ellenállással
+const felsoAg = HalozatRedukalo.soros(yAgak.rb, R);
+const alsoAg = HalozatRedukalo.soros(yAgak.rc, R);
+console.log(`2. Soros ágak értéke: ${felsoAg} Ω`);
+
+// 3. Lépés: Párhuzamos redukció a két ág között
+const parhuzamosEredo = HalozatRedukalo.parhuzamos(felsoAg, alsoAg);
+console.log(`3. Párhuzamos rész eredője: ${parhuzamosEredo} Ω`);
+
+// 4. Lépés: Utolsó soros elem (A ponttól induló Y szár)
+const vegsoEredo = HalozatRedukalo.soros(yAgak.ra, parhuzamosEredo);
+
+console.log("\n--------------------------------");
+console.log(`VÉGEREDMÉNY: ${vegsoEredo} Ω`);
+console.log("--------------------------------");
+```
+
+```log
+--- Hídkapcsolás redukciója ---
+1. Delta-Y utáni új ágak: 40 Ω
+2. Soros ágak értéke: 160 Ω
+3. Párhuzamos rész eredője: 80 Ω
+
+--------------------------------
+VÉGEREDMÉNY: 120 Ω
+--------------------------------
+```
