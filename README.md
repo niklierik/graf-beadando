@@ -1270,3 +1270,131 @@ Egy gráf biztosan nem perfekt, ha tartalmaz:
 * Egy feszített páratlan kör komplementerét (páratlan anti-lyuk).
 
 **Példa:** Az 5 hosszú kör ($C_5$) nem perfekt, mert $\omega(C_5) = 2$ (csak élek vannak benne, háromszögek nincsenek), de a színezéséhez $\chi(C_5) = 3$ színre van szükség.
+
+### Frekvenciakiosztás okosotthonban
+
+Egy folyosó mentén elhelyezett szenzorok interferencia-hálózatát kell frekvenciacsatornákkal ellátni. Az ütközéseket egy **intervallum gráf** modellezi, amelyről tudjuk, hogy a **perfekt gráfok** osztályába tartozik.
+
+#### Adatok
+* **Modell:** A csúcsok a szenzorok, az élek az interferenciát jelölik.
+* **Klikkszám ($\omega$):** A mérések alapján a legnagyobb olyan csoport, ahol minden eszköz zavarja az összes többit, **4** tagú.
+
+#### Kérdés
+Mennyi a minimálisan szükséges frekvenciacsatornák száma ($\chi$)?
+
+#### Gráf
+
+```mermaid
+graph LR
+    %% Csúcsok (Szenzorok)
+    S1["S1 (Ch 1)"]
+    S2["S2 (Ch 2)"]
+    S3["S3 (Ch 3)"]
+    S4["S4 (Ch 4)"]
+    S5["S5 (Ch 1)"]
+    S6["S6 (Ch 2)"]
+
+    %% Élek (Interferencia/Ütközés)
+    %% A központi 4-es klikk (w=4)
+    S1 --- S2
+    S1 --- S3
+    S1 --- S4
+    S2 --- S3
+    S2 --- S4
+    S3 --- S4
+
+    %% További kapcsolatok (láncolt interferencia)
+    S4 --- S5
+    S5 --- S6
+    S3 --- S5
+
+    %% Stílusok a frekvenciacsatornák (színek) szerint
+    style S1 fill:#f96,stroke:#333,stroke-width:2px
+    style S5 fill:#f96,stroke:#333,stroke-width:2px
+    
+    style S2 fill:#9f9,stroke:#333,stroke-width:2px
+    style S6 fill:#9f9,stroke:#333,stroke-width:2px
+    
+    style S3 fill:#6cf,stroke:#333,stroke-width:2px
+    style S4 fill:#f66,stroke:#333,stroke-width:2px
+
+    subgraph Legnagyobb_Klikk_omega_4
+        S1
+        S2
+        S3
+        S4
+    end
+```
+
+#### Megoldás
+Mivel a gráf perfekt, minden feszített részgráfjára — így a teljes gráfra is — igaz, hogy:
+$$\chi(G) = \omega(G)$$
+Mivel a maximális klikkméret $\omega(G) = 4$, a rendszer zavarmentes működéséhez pontosan **4 különböző frekvenciacsatorna** szükséges.
+
+#### Kód
+
+```js
+/**
+ * Frekvenciakiosztás szimulálása perfekt gráfon (Mohó színezés)
+ */
+function assignFrequencies(devices, interferenceEdges) {
+    const adj = new Map();
+    devices.forEach(d => adj.set(d, []));
+    
+    // Gráf felépítése (szomszédsági lista)
+    interferenceEdges.forEach(([u, v]) => {
+        adj.get(u).push(v);
+        adj.get(v).push(u);
+    });
+
+    const assignments = {}; // { eszköz: csatorna_száma }
+
+    // Mohó színezés
+    devices.forEach(device => {
+        const neighborChannels = new Set();
+        
+        // Megnézzük a szomszédok (ütköző eszközök) csatornáit
+        adj.get(device).forEach(neighbor => {
+            if (assignments[neighbor] !== undefined) {
+                neighborChannels.add(assignments[neighbor]);
+            }
+        });
+
+        // Megkeressük a legkisebb szabad csatornát (1-től indulva)
+        let channel = 1;
+        while (neighborChannels.has(channel)) {
+            channel++;
+        }
+        
+        assignments[device] = channel;
+    });
+
+    // Kromatikus szám meghatározása
+    const chromaticNumber = Math.max(...Object.values(assignments));
+
+    return {
+        assignments,
+        chromaticNumber
+    };
+}
+
+// --- Adatok (Szenzorok és interferenciák) ---
+const sensors = ["S1", "S2", "S3", "S4", "S5", "S6"];
+const interference = [
+    ["S1", "S2"], ["S1", "S3"], ["S1", "S4"],
+    ["S2", "S3"], ["S2", "S4"],
+    ["S3", "S4"], ["S3", "S5"],
+    ["S4", "S5"],
+    ["S5", "S6"]
+];
+
+const result = assignFrequencies(sensors, interference);
+
+console.log(`Minimálisan szükséges csatornák száma: ${result.chromaticNumber}`);
+console.log("Kiosztás eszközönként:", result.assignments);
+```
+
+```log
+Minimálisan szükséges csatornák száma: 4
+Kiosztás eszközönként: { S1: 1, S2: 2, S3: 3, S4: 4, S5: 1, S6: 2 }
+```
