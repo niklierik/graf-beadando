@@ -2146,6 +2146,12 @@ Regiszter kiosztás: { V4: 0, V2: 0, V3: 1, V1: 2 }
 Szükséges regiszterek száma: 3
 ```
 
+## Hibák, amiket az AI elkövetett
+
+A lentebb található beszélgetésben megtekinthető, hogy viszonylag keveset hibázott az AI. Többségében inkább formai problémák voltak, pl. a feladatleírásban még neveket használt (pl. Adél, Balázs), a kódban már csak betűket használt. Illetve szöveget fogalmaztattam többségében vele újra.
+
+A számolásokat én többségében helyesnek ítélem.
+
 ## Források
 
 - Jegyzet: https://www.inf.u-szeged.hu/~pluhar/oktatas/grafalg.pdf
